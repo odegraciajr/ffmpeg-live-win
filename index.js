@@ -21,17 +21,118 @@ function FFmpeg_Live(options) {
 
 
     for (var key in self.options) {
+        //console.log(key + ":" + self.options[key]);
         processed_options.push(key);
         var val = self.options[key]
         if (val !== null && typeof val !== 'undefined') {
             processed_options.push(val);
         }
     }
+    return processed_options;
+  }
+  self._parseProgress = function(line) {
+    // Values, ordered:
+    //
+    // [current frame, frames per second, q (codec dependant parameter),
+    // target size, time mark, bitrate]
+    //
+    // Regex matches series of digits, 'dot' and colons.
+    var progressValues = line.match(/[\d.:]+/g)
+
+    var progress = {
+        frame:      progressValues[0],
+        fps:        progressValues[1],
+        targetSize: progressValues[3],
+        timeMark:   progressValues[4],
+        kbps:       progressValues[5] || 0,  // in case of "N/A"
+    }
+
+    return progress;
+  }
+
+  self._parseInputProperties = function(line) {
+      // Properties: [duration, start, bitrate]
+      // Note: regex matches single ':' chars, so we remove them.
+      var values = line.match(/[\d.:]+/g).filter(function(val) {
+          return val !== ':';
+      });
+
+      var properties = {
+          duration:      values[0],
+          bitrate_kbps:  values[2]
+      }
+
+      return properties;
+  }
+
+  self._handleInfo = function(line) {
+      var line = line.trim();
+      if (line.substring(0, 5) === 'frame') {
+          self.proc.emit('progress', self._parseProgress(line));
+      }
+      if (line.substring(0, 8) === 'Duration') {
+          var inputProperties = self._parseInputProperties(line);
+          self.properties.input = inputProperties;
+          self.proc.emit('properties', {from: 'input', data: inputProperties});
+      }
+  }
+  self.getDevices = function(callback){
+      var devices = [];
+
+      var options ={
+          '-list_devices': 'true',
+          '-f': 'dshow',
+          '-i': 'dummy'
+      };
+      var opts = self._processOptions(options);
+
+      var proc = spawn('ffmpeg', opts);
+
+      proc.stderr.pipe(split(/[\r\n]+/)).on('data',function(device){
+        var device = device.trim();
+
+        if (device !== null && typeof device !== 'undefined') {
+          if (device.substring(0, 8) === '[dshow @') {
+            //var device = "this is a test sentence with a reference[dshow @ 0000000000ba71a0]";
+            //console.log(device.replace(/"(.*?)"$/g, ''));
+            //remove [[dshow @ xxxxxxxx] text and trim
+            var _device = device.replace(/(\[.*?\])/g, '').trim();
+
+            //remove "Alternative nameXXXX"
+            var teststring = "Alternative name";//this will only work on WINOS
+            if(_device.indexOf(teststring) === -1){
+
+              if(_device.indexOf('video devices') !== -1){
+                _device = "video_devices";
+              }else if(_device.indexOf('audio devices') !== -1){
+                _device = "audio_devices";
+              }else{
+                //devices.push(_device);
+                console.log(_device);
+              }
+
+
+            }
+            //console.log(devices);
+          }
+
+        }
+
+      });
+
+      if (callback)
+          callback(null, proc); // no error
 
   }
 
   self.start = function(callback) {
-        /*var proc = spawn('ffmpeg', self._processOptions(self.options));
+
+        var opts = self._processOptions(self.options);
+
+        console.log("'ffmpeg " + opts.join(" ")+ "'");
+        var proc = spawn('ffmpeg', opts);
+
+
 
         // `self.proc` is the exposed EventEmitter, so we need to pass
         // events and data from the actual process to it.
@@ -53,8 +154,8 @@ function FFmpeg_Live(options) {
         if (callback)
             callback(null, proc); // no error
 
-        return self;*/
-        return self._processOptions(self.options);
+        return self;
+        //return
     }
 
   return self;
