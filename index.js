@@ -1,5 +1,6 @@
 var spawn = require('child_process').spawn,
     split = require('split'),
+
     EventEmiter = require('events').EventEmitter
 
 function FFmpeg_Live(options) {
@@ -77,7 +78,7 @@ function FFmpeg_Live(options) {
       }
   }
   self.getDevices = function(callback){
-      var devices = [];
+      var _raw_devices = [];
 
       var options ={
           '-list_devices': 'true',
@@ -88,41 +89,32 @@ function FFmpeg_Live(options) {
 
       var proc = spawn('ffmpeg', opts);
 
+      // `self.proc` is the exposed EventEmitter, so we need to pass
+      // events and data from the actual process to it.
+      var default_events = ['data', 'error','close'];
+      default_events.forEach(function(event) {
+          proc.on(event, self.proc.emit.bind(self.proc, event));
+      })
+
       proc.stderr.pipe(split(/[\r\n]+/)).on('data',function(device){
         var device = device.trim();
 
         if (device !== null && typeof device !== 'undefined') {
           if (device.substring(0, 8) === '[dshow @') {
-            //var device = "this is a test sentence with a reference[dshow @ 0000000000ba71a0]";
-            //console.log(device.replace(/"(.*?)"$/g, ''));
             //remove [[dshow @ xxxxxxxx] text and trim
             var _device = device.replace(/(\[.*?\])/g, '').trim();
-
             //remove "Alternative nameXXXX"
             var teststring = "Alternative name";//this will only work on WINOS
             if(_device.indexOf(teststring) === -1){
-
-              if(_device.indexOf('video devices') !== -1){
-                _device = "video_devices";
-              }else if(_device.indexOf('audio devices') !== -1){
-                _device = "audio_devices";
-              }else{
-                //devices.push(_device);
-                console.log(_device);
-              }
-
-
+              _raw_devices.push(_device);
             }
-            //console.log(devices);
           }
-
         }
 
+      }).on('close',function(){
+        //create a function that can group all video items and audio items.
+        callback(_raw_devices);
       });
-
-      if (callback)
-          callback(null, proc); // no error
-
   }
 
   self.start = function(callback) {
@@ -131,8 +123,6 @@ function FFmpeg_Live(options) {
 
         console.log("'ffmpeg " + opts.join(" ")+ "'");
         var proc = spawn('ffmpeg', opts);
-
-
 
         // `self.proc` is the exposed EventEmitter, so we need to pass
         // events and data from the actual process to it.
