@@ -1,0 +1,20 @@
+{
+  "name": "ffmpeg-live",
+  "version": "1.0.0",
+  "description": "Nodejs implementation of ffmpeg() for Facebook Live.\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[Chttps://ffmpeg.org/\u001b[3~\u001b[3~\u001b[3~\u001b[3~\u001b[A\u001b[B\u001b[3~\u001b[3~\u001b[3~\u001b[3~\u001b[3~\u001b[3~\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[C\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[) suing Facebook Live.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://odegraciajr@bitbucket.org/odegraciajr/ffmpeg-live.git"
+  },
+  "keywords": [
+    "ffmpeg",
+    "facebook"
+  ],
+  "author": "Oscar De Gracia Jr <odegraciajr@gmail.com> (http://tiltlab.com)",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/odegraciajr/ffmpeg-live#readme"
+}
